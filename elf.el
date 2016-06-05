@@ -11,35 +11,29 @@
   (let ((elf-mode-syntax-table (make-syntax-table)))
      (modify-syntax-entry ?# "< b"elf-mode-syntax-table ) ;; begin comment
      (modify-syntax-entry ?\n "> b" elf-mode-syntax-table)  ;; end comment
+     (modify-syntax-entry ?< "\"" elf-mode-syntax-table)
+     (modify-syntax-entry ?> "\"" elf-mode-syntax-table)
      elf-mode-syntax-table)
    "syntax table" )
 
 ;; regex from the asm-mode 
  (defconst elf-font-lock-keywords
    (append
-    ;; this makes things blue 
-   ;; '(("^\\(\\(\\sw\\|\\s_\\)+\\)\\>:?[ \t]*\\(\\sw+\\(\\.\\sw+\\)*\\)?"
-    ;;   (1 font-lock-function-name-face) (3 font-lock-keyword-face nil t))
-      ;; label started from ".". this has the effect of making the memory purple
-      '(("^\\(\\.\\(\\sw\\|\\s_\\)+\\)\\>:"
-       1 font-lock-function-name-face)
+      ;; memory, with and without a colon
+      '(("^\\s-*\\([[:xdigit:]]*\\b\\|:\\)" . font-lock-keyword-face)
 
-      ("^\\((\\sw+)\\)?\\s +\\(\\(\\.?\\sw\\|\\s_\\)+\\(\\.\\sw+\\)*\\)"
-       2 font-lock-keyword-face)
+	;; comments (should do this another way, but...) 
+	("#.*" . font-lock-comment-face)
 
-      ;; directive started from ".".
-      ("^\\(\\.\\(\\sw\\|\\s_\\)+\\)\\>[^:]?"
-       1 font-lock-keyword-face)
+	;; anything in <> 
+	("<.*?>" . font-lock-function-name-face)
+  
+	;; constants
+	("\$0x[[:xdigit:]]+" . font-lock-constant-face)
 
-      ;; anything in <> 
-      ("<.*?>" . font-lock-function-name-face)
-
-      ;; constants
-      ("\$0x[0-9 a-f]+" . font-lock-constant-face)
-
-      ;; %register
-      ("%\\sw+" . font-lock-variable-name-face))
-    cpp-font-lock-keywords)
+	;; %register
+	("%\\sw+" . font-lock-variable-name-face))
+      cpp-font-lock-keywords)
    "Additional expressions to highlight in Assembler mode.")
 
 (define-derived-mode elf-mode fundamental-mode "elf" 
