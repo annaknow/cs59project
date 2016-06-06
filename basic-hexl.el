@@ -1,15 +1,28 @@
 (defvar basic-hexl-mode-hook
   nil)
 
-;;(load-file "elf.el")
+(load-file "elf.el")
+
+(defvar basic-hexl-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?\" "w" st) 
+    st)
+    "syntax table")
+
+(defconst basic-hexl-font-lock-keywords
+  (append
+   ;; memory numbers 
+   '(("^[[:xdigit:]]*" . font-lock-keyword-face))
+   font-lock-keywords) 
+  "adding memory highlighting")
+
 
 (define-derived-mode basic-hexl-mode fundamental-mode "basic-hexl"
-  "a totally editable but not very safe hexl mode" 
+  "a totally editable but not very safe hexl mode
+it allows any sort of character to be entered and does not enforce alignment" 
     (add-hook 'write-contents-functions 'basic-hexl-save-buffer nil t)
-    (add-hook 'change-major-mode-hook 'basic-hexl-mode-exit nil t)
     (hexlify-buffer)
-)
-
+    (setq-local font-lock-defaults '(basic-hexl-font-lock-keywords)))
 
 ;;; NEW ;;; 
 (defun basic-hexl-disassemble ()
@@ -57,12 +70,6 @@ Saving updates the ascii representation of the text"
        nil))
     ;; Return t to indicate we have saved t
     t))
-
-
-(defun basic-hexl-mode-exit ()
-  "Exit Hexl mode, dehexlify" 
-  (interactive "p")
-  (dehexlify-buffer))
 
 
 

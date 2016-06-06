@@ -1,0 +1,44 @@
+Anna Knowles
+CS59
+Spring 2016
+
+An exploration of editing assembly and hex in Emacs, specifically with Emacs major modes 
+
+System: all work done in elisp, GNU Emacs 24.3.1 (x86_64-pc-linux-gnu, GTK+ Version 3.10.7), running on 64-bit Ubuntu 14.04. No guarantees that any of this will work on MacOS (actually, I bet it won't)
+
+Project Goals: make it easier to read and edit assembly in Emacs 
+
+Existing Modes: 
+
+asm-mode: syntax highlighting for assembly. This came with my install of Emacs, and provides basic syntax highlighting. 
+
+hexl-mode: Also standard with Emacs. This calls the mysterious hexl-program to convert a binary file to the hexl format, which has byte addresses (starting at 0) down the left of the screen, the hex values grouped in two byte chunks in the middle, and the ascii value of the hex on the right. The hexl mode overwrites characters when inserting to maintain the alignment, and the default character insertion inserts ascii characters in the ascii section, and the equivalent hex value in the hex section. This is annoying for trying to edit a binary, as editing the hex values directly requires extra keystrokes. 
+
+
+What I implemented (part 1): 
+
+I was thinking about the x86 disassembling that we did in the early part of the class, and thought that it would be nice to have some emacs functionality to support that. 
+
+I created a new major mode "elf-mode" (described in elf.el). It's derived from the fundamental mode, and provides syntax highlighting for the elf64-x86-64 file format that is produced by objdump -d [binary] on a linux system. This makes it easier to read the file - registers are clearly identified, labels are highlighted, and constant values (as opposed to addresses) are a different color. It particularly helps with keeping track of the constants versus addresses. 
+
+I mostly followed the tutorial on the emacs wiki (https://www.emacswiki.org/emacs/ModeTutorial). The trickiest part was getting the regex for syntax highlighting right (I haven't tried my hand at regex before - it was interesting). 
+
+There are not a ton of interesting lisp features in the actual implementation of the mode, but it was an interesting foray into the world of useful lisp. The ease of adding different highlighting demonstrated the power of extensible tables and shadowing values. 
+
+To use elf-mode: load the file elf.el, then M-x elf-mode on an appropriate file. I created files of the format by running "objdump -d [binary] >> [binary].elf", sending the output into a file with a .elf extension. If elf.el is loaded, files ending with .elf will automatically be shown in elf-mode. 
+
+What I implemented (part 2): 
+
+I spent a long time looking at the source code for hexl-mode (hexl.el, found on github. One repository was this one https://github.com/typester/emacs/blob/master/lisp/hexl.el, I also forked it from https://github.com/emacs-mirror/emacs). Hexl-mode is interesting because it overrides all of the normal "move-x-unit" commands to treat a hex byte (two hex characters) as one unit. The self-insert-character command is also overwritten so that it inserts the hex value in the hex portion of the buffer and the ascii character in the ascii portion. Thus, editing or extending this mode to allow for direct editing of the hex values requires re-formulating the way the mode represents location and characters internally. 
+
+So, instead of directly adding to hexl mode, I implemented another simple major mode - "basic-hexl-mode". I used some of the functions from hexl mode as a base. This basic mode hexlifies files using the same helify-program, but is derived from fundamental mode and so has "normal" editing controls and abilities. You can edit the hex values directly and when the file is saved the corresponding ascii values will be shown on the right. Unlike normal hexl mode, editing the ascii values does not change the hex values, even after saving. 
+
+Basic hexl-mode also provides an interactive function "basic-hexl-disassemble" that calls objdump -d to disassemble the (saved version) of the file in the hexl-mode buffer. The disassemble function shows the output in a new buffer in a new window. It opens in elf-mode, which provides convenient syntax highlighting for reading the assembly. The basic interactive search function lets you find matching hex values in both files (more or less), and in the ones that I tested with the memory addresses were at a constant offset. 
+
+As it is, my basic hexl mode provides a simply, if slightly clunky, way to look at assembly next to the hex values of the binary, and edit the hex values, save, disassemble and look at the assembly again. 
+
+
+Future improvements: 
+There is room for lots more work in this vein - my basic hexl mode could be made much safer for editing (more like the original hexl mode), while still allowing direct hex insertion. A simple way to do that would just be to issue a warning if the user tried to save but had changed the number of bytes in the file, or track the bytes on a line to do it with slightly more granularity. The columns and format of the hexlified file make it fairly easy to keep changes legal without any programmatic safeguards. 
+
+It would be super cool to be able to directly correlate and highlight the hex opcodes in the objdump output with the hex values in the hexlified binary. 
