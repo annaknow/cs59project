@@ -966,53 +966,49 @@ and their encoded form is inserted byte by byte."
   (my-hexl-insert-multibyte-char last-command-event arg))
 
 
-;; toggle insert mode to insert hex or ascii
-(defcustom my-hexl-insert-hex-mode t
-  "if non nil, allow insertion directly in hex" 
-  :type 'boolean
-  :group 'my-hexl
-  :version "20.3")
+(defvar my-hexl-allow-direct-hex nil
+  "allow direct insertion of hex values")
+(make-variable-buffer-local 'my-hexl-allow-direct-hex)
 
-;;create a command to objdump and display
-;; use shell-command
-;; get the name of this file that created the buffer
-;; dissas
-;; create a new buffer 
-;; set the mode to elf 
-;; tada! 
+(defun my-hexl-direct-hex-insert ()
+  "toggle insertion directly into the hex bytes
+customize the variable `my-hexl-allow-direct-hex' to disable"
+  (interactive "P") 
+  (setq my-hexl-allow-direct-hex (not my-hexl-allow-direct-hex)))
+ 
 
 (defun my-hexl-insert-char (ch num)
   "Insert the character CH NUM times in a my-hexl buffer.
 
 CH must be a unibyte character whose value is between 0 and 255."
-  (if (or (< ch 0) (> ch 255))
-      (error "Invalid character 0x%x -- must be in the range [0..255]" ch))
-  (let ((address (my-hexl-current-address t)))
-    (while (> num 0)
-      (let ((hex-position (my-hexl-address-to-marker address))
-	    (ascii-position
-	     (+ (* (/ address 16) (my-hexl-line-displen))
-                (my-hexl-ascii-start-column)
-                (point-min)
-                (% address 16)))
-	    at-ascii-position)
-	(if (= (point) ascii-position)
-	    (setq at-ascii-position t))
-	(goto-char hex-position)
-	(delete-char 1) ;; changed 
-	(insert ch) ;; changed 
-	(goto-char ascii-position)
-	(delete-char 1)
-	(insert (my-hexl-printable-character ch))
-	(or (eq address my-hexl-max-address)
-	    (setq address (1+ address)))
-	(my-hexl-goto-address address)
-	(if at-ascii-position
-	    (progn
-	      (beginning-of-line)
-	      (forward-char (my-hexl-ascii-start-column))
-	      (forward-char (% address 16)))))
-      (setq num (1- num)))))
+    (if (or (< ch 0) (> ch 255))
+	(error "Invalid character 0x%x -- must be in the range [0..255]" ch))
+    (let ((address (my-hexl-current-address t)))
+      (while (> num 0)
+	(let ((hex-position (my-hexl-address-to-marker address))
+	      (ascii-position
+	       (+ (* (/ address 16) (my-hexl-line-displen))
+		  (my-hexl-ascii-start-column)
+		  (point-min)
+		  (% address 16)))
+	      at-ascii-position)
+	  (if (= (point) ascii-position)
+	      (setq at-ascii-position t))
+	  (goto-char hex-position)
+	  (delete-char 2) 
+	  (insert (format "%02x" ch))
+	  (goto-char ascii-position)
+	  (delete-char 1)
+	  (insert (my-hexl-printable-character ch))
+	  (or (eq address my-hexl-max-address)
+	      (setq address (1+ address)))
+	  (my-hexl-goto-address address)
+	  (if at-ascii-position
+	      (progn
+		(beginning-of-line)
+		(forward-char (my-hexl-ascii-start-column))
+		(forward-char (% address 16)))))
+	(setq num (1- num)))))
 
 ;; hex conversion
 
