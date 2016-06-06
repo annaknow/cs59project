@@ -30,12 +30,12 @@
 ;; binary.  For full instructions, invoke `my-hexl-mode' on an empty buffer and
 ;; do M-x `describe-mode'.
 ;;
-;; NOTE: Remember to change `hexl-program' or `hexl-options' if needed.
+;; NOTE: Remember to change `hexl-program' or `my-hexl-options' if needed.
 ;;
 ;; Currently my-hexl only supports big endian hex output with 16 bit
 ;; grouping.
 ;;
-;; -iso in `hexl-options' will allow iso characters to display in the
+;; -iso in `my-hexl-options' will allow iso characters to display in the
 ;; ASCII region of the screen (if your Emacs supports this) instead of
 ;; changing them to dots.
 
@@ -63,7 +63,7 @@
 
 (defcustom hexl-program "my-hexl"
   "The program that will my-hexlify and demy-hexlify its stdin.
-`hexl-program' will always be concatenated with `hexl-options'
+`hexl-program' will always be concatenated with `my-hexl-options'
 and \"-de\" when demy-hexlifying a buffer."
   :type 'string
   :group 'my-hexl)
@@ -74,7 +74,7 @@ and \"-de\" when demy-hexlifying a buffer."
   :type 'string
   :group 'my-hexl)
 
-(defcustom hexl-options (format "-hex %s" my-hexl-iso)
+(defcustom my-hexl-options (format "-hex %s" my-hexl-iso)
   "Space separated options to `hexl-program' that suit your needs.
 Quoting cannot be used, so the arguments cannot themselves contain spaces.
 If you wish to set the `-group-by-X-bits' options, set `my-hexl-bits' instead,
@@ -468,6 +468,14 @@ and edit the file in `my-hexl-mode'."
   (if (not (eq major-mode 'my-hexl-mode))
       (my-hexl-mode)))
 
+;;; NEW ;;; 
+(defun my-hexl-disassemble ()
+  "Disassemble the binary using objdump, and show the output in a new buffer in a split window, with `elf-mode' syntax highlighting" 
+  (interactive
+   (progn (shell-command (concat "objdump -d " (buffer-name)) (concat (buffer-name) ".elf"))
+	  (with-current-buffer (concat (buffer-name) ".elf") 
+	    (funcall 'elf-mode)))))
+
 (defun my-hexl-revert-buffer-function (_ignore-auto _noconfirm)
   (let ((coding-system-for-read 'no-conversion)
 	revert-buffer-function)
@@ -818,10 +826,10 @@ You may also type octal digits, to insert a character with that code."
 
 ;00000000: 0011 2233 4455 6677 8899 aabb ccdd eeff  0123456789ABCDEF
 
-(defun hexl-options (&optional test)
-  "Combine `my-hexl-bits' with `hexl-options', altering `hexl-options' as needed
+(defun my-hexl-options (&optional test)
+  "Combine `my-hexl-bits' with `my-hexl-options', altering `my-hexl-options' as needed
 to produce the command line options to pass to the my-hexl command."
-  (let ((opts (or test hexl-options)))
+  (let ((opts (or test my-hexl-options)))
     (when (memq my-hexl-bits '(8 16 32 64))
       (when (string-match "\\(.*\\)-group-by-[0-9]+-bits\\(.*\\)" opts)
         (setq opts (concat (match-string 1 opts)
@@ -851,7 +859,7 @@ This discards the buffer's undo information."
            (mapcar (lambda (s)
                      (if (not (multibyte-string-p s)) s
                        (encode-coding-string s locale-coding-system)))
-                   (split-string (hexl-options))))
+                   (split-string (my-hexl-options))))
     (if (> (point) (my-hexl-address-to-marker my-hexl-max-address))
 	(my-hexl-goto-address my-hexl-max-address))))
 
@@ -868,7 +876,7 @@ This discards the buffer's undo information."
 	(buffer-undo-list t))
     (apply 'call-process-region (point-min) (point-max)
 	   (expand-file-name hexl-program exec-directory)
-	   t t nil "-de" (split-string (hexl-options)))))
+	   t t nil "-de" (split-string (my-hexl-options)))))
 
 (defun my-hexl-char-after-point ()
   "Return char for ASCII hex digits at point."
@@ -957,6 +965,22 @@ and their encoded form is inserted byte by byte."
   (interactive "p")
   (my-hexl-insert-multibyte-char last-command-event arg))
 
+
+;; toggle insert mode to insert hex or ascii
+(defcustom my-hexl-insert-hex-mode t
+  "if non nil, allow insertion directly in hex" 
+  :type 'boolean
+  :group 'my-hexl
+  :version "20.3")
+
+;;create a command to objdump and display
+;; use shell-command
+;; get the name of this file that created the buffer
+;; dissas
+;; create a new buffer 
+;; set the mode to elf 
+;; tada! 
+
 (defun my-hexl-insert-char (ch num)
   "Insert the character CH NUM times in a my-hexl buffer.
 
@@ -975,11 +999,11 @@ CH must be a unibyte character whose value is between 0 and 255."
 	(if (= (point) ascii-position)
 	    (setq at-ascii-position t))
 	(goto-char hex-position)
-	(delete-char 1)
-	(insert  ch)
+	(delete-char 1) ;; changed 
+	(insert ch) ;; changed 
 	(goto-char ascii-position)
 	(delete-char 1)
-	(insert (my-hexl-printable-character ch)) ;; todo: get the adjacent char
+	(insert (my-hexl-printable-character ch))
 	(or (eq address my-hexl-max-address)
 	    (setq address (1+ address)))
 	(my-hexl-goto-address address)

@@ -1,6 +1,11 @@
 
 (defvar elf-mode-hook nil)
 
+;; autoload
+(add-to-list 'auto-mode-alist '("\\.elf\\'" . elf-mode))
+
+(add-to-list 'magic-mode-alist '("file format elf64" .elf-mode))
+
 (defvar elf-mode-map 
   (let ((kmap (make-sparse-keymap)))
     (define-key kmap "\C-j" 'newline-and-indent); define mappings in here
@@ -42,5 +47,16 @@
 
 
 (provide 'elf) 
+;; derived mode start up
+(define-derived-mode elf-mode fundamental-mode "elf" 
+  "a major mode for viewing elf files" 
+;;   :syntax-table elf-mode-syntax-table
+  (setq-local comment-start "# ") 
+  (setq-local comment-end "")
+  (setq-local font-lock-defaults
+	      '(elf-font-lock-keywords)))
+
+
+(provide 'elf)
 
 ;; elf.el ends here

@@ -10,3 +10,11 @@ https://www.emacswiki.org/emacs/RegularExpression
 
 for work on hexl: 
 http://opensource.apple.com//source/emacs/emacs-39/emacs/lisp/hexl.el
+
+
+How to run: 
+
+M-x load-file elf.el
+M-x load-file my-hexl.el
+
+I have an odd thing with dependencies and loading where if I don't call hexl-mode at least once before loading my-hexl it doesn't find my-hexl
