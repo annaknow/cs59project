@@ -1,0 +1,12 @@
+for the elf file format: 
+
+Some regex and other inspiration originally from: 
+https://github.com/emacs-mirror/emacs/blob/master/lisp/progmodes/asm-mode.el
+
+Also 
+https://www.emacswiki.org/emacs/DerivedMode
+https://www.emacswiki.org/emacs/ModeTutorial
+https://www.emacswiki.org/emacs/RegularExpression
+
+for work on hexl: 
+http://opensource.apple.com//source/emacs/emacs-39/emacs/lisp/hexl.el

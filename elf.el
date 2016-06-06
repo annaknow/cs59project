@@ -11,36 +11,32 @@
   (let ((elf-mode-syntax-table (make-syntax-table)))
      (modify-syntax-entry ?# "< b"elf-mode-syntax-table ) ;; begin comment
      (modify-syntax-entry ?\n "> b" elf-mode-syntax-table)  ;; end comment
-     (modify-syntax-entry ?< "\"" elf-mode-syntax-table)
-     (modify-syntax-entry ?> "\"" elf-mode-syntax-table)
+     (modify-syntax-entry ?\" "w" elf-mode-syntax-table)  ;;" remove string delimiters
+     (modify-syntax-entry ?< "(>" elf-mode-syntax-table)  
+     (modify-syntax-entry ?> "(<" elf-mode-syntax-table) 
      elf-mode-syntax-table)
    "syntax table" )
 
-;; regex from the asm-mode 
- (defconst elf-font-lock-keywords
+
+(defconst elf-font-lock-keywords
    (append
-      ;; memory, with and without a colon
-      '(("^\\s-*\\([[:xdigit:]]*\\b\\|:\\)" . font-lock-keyword-face)
-
-	;; comments (should do this another way, but...) 
-	("#.*" . font-lock-comment-face)
-
+      ;; memory (indented) 
+      '(("^\\s-\\s-\\([[:xdigit:]]*\\b\\)" . font-lock-keyword-face)
 	;; anything in <> 
 	("<.*?>" . font-lock-function-name-face)
-  
 	;; constants
 	("\$0x[[:xdigit:]]+" . font-lock-constant-face)
-
 	;; %register
-	("%\\sw+" . font-lock-variable-name-face))
+	("%\\sw\\sw\\sw?" . font-lock-variable-name-face))
       cpp-font-lock-keywords)
    "Additional expressions to highlight in Assembler mode.")
 
+;; derived mode start up
 (define-derived-mode elf-mode fundamental-mode "elf" 
   "a major mode for viewing elf files" 
+;;   :syntax-table elf-mode-syntax-table
   (setq-local comment-start "# ") 
   (setq-local comment-end "")
- ;; (setq-local comment-start-skip "#+\\s-*")
   (setq-local font-lock-defaults
 	      '(elf-font-lock-keywords)))
 
